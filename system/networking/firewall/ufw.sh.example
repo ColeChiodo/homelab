@@ -1,0 +1,11 @@
+#!/bin/bash
+
+ufw default deny incoming
+ufw default allow outgoing
+
+# SSH
+ufw allow 22/tcp
+
+# Cloudflare Tunnel does not require inbound app ports.
+
+ufw enable

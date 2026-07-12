@@ -1,0 +1,19 @@
+services:
+  qbittorrent:
+    image: trigus42/qbittorrentvpn
+    container_name: qbittorrent
+    environment:
+      - VPN_TYPE=wireguard
+      # Set a strong password after deployment
+      - WEBUI_PASSWORD=changeme
+    volumes:
+      - './config/:/config'
+      - /path/to/downloads:/downloads
+    ports:
+     - 8081:8080
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0

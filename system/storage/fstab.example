@@ -1,0 +1,19 @@
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+# / was on /dev/nvme0n1p2 during curtin installation
+/dev/disk/by-uuid/11111111-1111-1111-1111-111111111111 / ext4 defaults 0 1
+
+# Media Drive
+UUID=22222222-2222-2222-2222-222222222222 /media/user/backup ext4 defaults,nofail 0 2
+
+# Nextcloud drive
+UUID=33333333-3333-3333-3333-333333333333 /srv/nextcloud/ncdata  ext4  defaults,noatime  0  2
+
+# /boot/efi was on /dev/nvme0n1p1 during curtin installation
+/dev/disk/by-uuid/AAAA-BBBB /boot/efi vfat defaults 0 1
+/swap.img	none	swap	sw	0	0

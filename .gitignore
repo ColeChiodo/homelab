@@ -1,0 +1,50 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment files (if used for secrets)
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Ansible (if sensitive vars files exist)
+*.vault
+
+# Private keys and certificates
+*.pem
+*.key
+*.pfx
+*.p12
+id_rsa*
+id_ecdsa*
+id_ed25519*
+
+# Credential files
+credentials
+*.cred
+.cloudflared/
+
+# Terraform / OpenTofu state and vars
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform/
+
+# Docker app config directories (may contain API keys)
+config/
+
+# SSL certificates
+npm/letsencrypt/
+npm/data/nginx/proxy_host/
+
+# Log files
+*.log
+
+# Common secrets directory
+secrets/

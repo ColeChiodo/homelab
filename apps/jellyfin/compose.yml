@@ -1,0 +1,26 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+
+    # UID:GID of the user that should own Jellyfin files.
+    user: "1000:1000"
+
+    network_mode: host
+
+    volumes:
+      # Jellyfin configuration.
+      - /srv/jellyfin/config:/config
+
+      # Jellyfin cache. This directory can be recreated and does not need to be backed up.
+      - /srv/jellyfin/cache:/cache
+
+      # Movies library.
+      # Replace with the path to your movies directory.
+      - /path/to/movies:/media/movies
+
+      # TV shows library.
+      # Replace with the path to your TV shows directory.
+      - /path/to/shows:/media/shows
+
+    restart: unless-stopped
