@@ -3,12 +3,13 @@ services:
         image: jvmilazz0/kavita:latest
         container_name: kavita
         volumes:
-            - /path/to/manga:/manga
-            - /path/to/comics:/comics
-            - /path/to/books:/books
-            - ./config:/kavita/config
+            - /srv/media/manga:/manga
+            - /srv/media/comics:/comics
+            - /srv/media/books:/books
+            - /srv/kavita/config:/kavita/config
         environment:
             - TZ=Etc/UTC
         ports:
             - "5000:5000"
         restart: unless-stopped
+

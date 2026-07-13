@@ -5,10 +5,10 @@ services:
     environment:
       - VPN_TYPE=wireguard
       # Set a strong password after deployment
-      - WEBUI_PASSWORD=changeme
+      - WEBUI_PASSWORD=chiodoadmin
     volumes:
-      - './config/:/config'
-      - /path/to/downloads:/downloads
+      - /srv/qbittorrent/config/:/config
+      - /Downloads:/downloads  # Configure Downloads Directory
     ports:
      - 8081:8080
     restart: unless-stopped

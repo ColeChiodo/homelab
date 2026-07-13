@@ -17,10 +17,11 @@ services:
 
       # Movies library.
       # Replace with the path to your movies directory.
-      - /path/to/movies:/media/movies
+      - /srv/media/movies:/media/movies
 
       # TV shows library.
       # Replace with the path to your TV shows directory.
-      - /path/to/shows:/media/shows
+      - /srv/media/shows:/media/shows
 
     restart: unless-stopped
+
