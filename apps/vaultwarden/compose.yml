@@ -14,3 +14,10 @@ services:
       WEBSOCKET_ENABLED: "true"
       SIGNUPS_ALLOWED: "false"
       TZ: "America/Los_Angeles"
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
