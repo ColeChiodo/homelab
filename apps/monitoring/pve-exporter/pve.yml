@@ -1,0 +1,9 @@
+default:
+  user: prometheus@pve
+  token_name: exporter
+  token_value: YOUR_TOKEN_VALUE
+  verify_ssl: false
+
+instances:
+  pve:
+    url: https://10.0.0.X:8006
