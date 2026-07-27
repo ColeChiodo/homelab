@@ -1,97 +1,118 @@
 # Homelab
 
-Media server and cloud infrastructure running on bare-metal Ubuntu.
+Media server, cloud storage, monitoring, and self-hosted services on bare-metal Ubuntu.
+
+## Layout
+
+```
+apps/          Docker Compose files and systemd units, one subdirectory per service
+docs/          Full recreation guides and reference documentation
+system/        Host-level configuration (storage, networking, backup)
+opentofu/      (placeholder) Infrastructure-as-code
+ansible/       (placeholder) Configuration management
+```
 
 ## Services
 
-| App | Type | Port | Data path | Install |
+| Service | Type | Port | Data path | Method |
 |---|---|---|---|---|
-| **Bazarr** | Subtitle management | 6767 | `/srv/bazarr/config` | Docker |
-| **FlareSolverr** | Cloudflare bypass proxy | 8191 | `/srv/flaresolverr` | Docker |
-| **Jellyfin** | Media server | host | `/srv/jellyfin` | Docker |
-| **Kavita** | Manga/comic reader | 5000 | `./config` (local) | Docker |
-| **Nextcloud** | Cloud storage + AIO | 8085 | `/srv/nextcloud-data` | Docker |
-| **Plex** | Media server | host | `./config` (local) | Docker |
-| **Portainer** | Docker management UI | 9000 | `/srv/portainer/data` | Docker |
-| **Prowlarr** | Indexer aggregator | — | `/var/lib/prowlarr` | systemd |
-| **qBittorrent** | Torrent client + VPN | 8081 | `./config` (local) | Docker |
-| **Radarr** | Movie management | — | `/var/lib/radarr` | systemd |
-| **Seerr** | Media request portal | 5055 | `/srv/seerr/config` | Docker |
-| **Sonarr** | TV series management | — | `/var/lib/sonarr` | systemd |
+| Bazarr | Subtitle management | 6767 | `/srv/bazarr/config` | Docker |
+| FlareSolverr | Cloudflare bypass proxy | 8191 | `/srv/flaresolverr` | Docker |
+| Jellyfin | Media server | 8096 | `/srv/jellyfin` | Docker |
+| Kavita | Manga/comic reader | 5000 | `/srv/kavita/config` | Docker |
+| Nextcloud AIO | Cloud storage | 8085 | `/srv/nextcloud-data` + Docker volume | Docker |
+| Nginx Proxy Manager | Reverse proxy | 80, 81, 443 | `/srv/npm` | Docker |
+| Plex | Media server | host | `apps/plex/config` | Docker |
+| Portainer | Docker management UI | 9000 | `/srv/portainer/data` | Docker |
+| Prowlarr | Indexer aggregator | 9696 | `/var/lib/prowlarr` | systemd |
+| qBittorrent | Torrent client + VPN | 8081 | `/srv/qbittorrent/config` | Docker |
+| Radarr | Movie management | 7878 | `/var/lib/radarr` | systemd |
+| Seerr | Media request portal | 5055 | `/srv/seerr/config` | Docker |
+| Sonarr | TV series management | 8989 | `/var/lib/sonarr` | systemd |
+| Tailscale | Mesh VPN | — | host-level | Native |
+| Vaultwarden | Password manager | 8087 | `/srv/vaultwarden` | Docker |
+
+### Monitoring stack
+
+| Service | Port | Data path |
+|---|---|---|
+| Prometheus | 9090 | `/srv/prometheus` |
+| Grafana | 9091 | `/srv/grafana` |
+| Proxmox VE Exporter | 9221 | — |
+| cAdvisor | 9080 | — |
+| Alertmanager | 9093 | — |
+| Blackbox Exporter | 9115 | — |
+
+Run via `apps/monitoring/compose.yml`.
+
+## Storage
+
+| Mount | Purpose |
+|---|---|
+| `/srv/<app>/` | Application data (config, state) |
+| `/srv/media/` | Media library (movies, shows, manga, comics, books) |
+
+See `system/storage/` for details.
 
 ## Permissions
 
-Most Docker services run with `PUID=1000 PGID=1000` (or `user: "1000:1000"`). Host data directories must be owned by this user:
+Docker apps run as `PUID=1000 PGID=1000` (or `user: "1000:1000"`):
 
 ```bash
-sudo chown -R 1000:1000 /srv/bazarr /srv/jellyfin /srv/portainer /srv/seerr /srv/flaresolverr
+sudo chown -R 1000:1000 /srv/bazarr /srv/jellyfin /srv/kavita /srv/grafana \
+  /srv/prometheus /srv/npm /srv/portainer /srv/seerr /srv/qbittorrent /srv/flaresolverr
 ```
 
-systemd services (Radarr, Sonarr, Prowlarr) run as their own system users:
+systemd services run as dedicated system users:
 
 ```bash
-# Radarr: user=radarr, group=media
-# Sonarr: user=sonarr,  group=media
-# Prowlarr: user=prowlarr, group=prowlarr
-sudo chown -R radarr:media   /var/lib/radarr
-sudo chown -R sonarr:media   /var/lib/sonarr
+sudo chown -R radarr:media     /var/lib/radarr
+sudo chown -R sonarr:media     /var/lib/sonarr
 sudo chown -R prowlarr:prowlarr /var/lib/prowlarr
 ```
 
-Local `./config` directories (Kavita, Plex, qBittorrent, Nextcloud NPM) should be owned by `1000:1000` or the user running Docker.
+Media library directories must be readable by uid 1000 (Docker apps) and the `media` group (systemd apps).
 
-Media library directories must be readable by uid 1000 (for Docker apps) and by the `media` group (for systemd apps).
+## Networking
+
+- **Reverse proxy**: Nginx Proxy Manager (port 81 for admin UI) routes HTTP/HTTPS traffic via the shared Docker `proxy` network.
+- **Mesh VPN**: Tailscale provides secure remote access to services.
+- **Firewall**: UFW rules managed via `system/networking/firewall/`.
 
 ## Backup
 
-### What to back up
-
-| App | Backup path | Exclude |
+| Service | Path to back up | Note |
 |---|---|---|
-| Bazarr | `/srv/bazarr/config` | — |
-| FlareSolverr | `/srv/flaresolverr` | — |
-| Jellyfin | `/srv/jellyfin/config` | `/srv/jellyfin/cache` |
-| Kavita | `apps/kavita/config/` | — |
-| Nextcloud | `apps/nextcloud/npm/`, AIO Docker volume, `/srv/nextcloud-data` | `npm/letsencrypt` (auto-renewed) |
-| Plex | `apps/plex/config/` | — |
-| Portainer | `/srv/portainer/data` | — |
-| Prowlarr | `/var/lib/prowlarr/` | — |
-| qBittorrent | `apps/qbittorrent/config/` | — |
-| Radarr | `/var/lib/radarr/` | — |
-| Seerr | `/srv/seerr/config` | — |
-| Sonarr | `/var/lib/sonarr/` | — |
-
-### Quick backup
+| Bazarr | `/srv/bazarr/config` | |
+| FlareSolverr | `/srv/flaresolverr` | |
+| Jellyfin | `/srv/jellyfin/config` | Exclude `/srv/jellyfin/cache` |
+| Kavita | `/srv/kavita/config` | |
+| Nextcloud | `/srv/nextcloud-data` + `nextcloud_aio_mastercontainer` volume | |
+| NPM | `/srv/npm/data` | Exclude `letsencrypt/` (auto-renewed) |
+| Plex | `apps/plex/config` | |
+| Portainer | `/srv/portainer/data` | |
+| Prowlarr | `/var/lib/prowlarr` | |
+| qBittorrent | `/srv/qbittorrent/config` | |
+| Radarr | `/var/lib/radarr` | |
+| Seerr | `/srv/seerr/config` | |
+| Sonarr | `/var/lib/sonarr` | |
+| Vaultwarden | `/srv/vaultwarden` | |
 
 ```bash
-# Docker app configs
-sudo tar czf backup-docker-configs.tar.gz \
-  /srv/bazarr/config \
-  /srv/flaresolverr \
-  /srv/jellyfin/config \
-  /srv/portainer/data \
-  /srv/seerr/config \
-  apps/kavita/config \
-  apps/plex/config \
-  apps/qbittorrent/config
+# Docker configs
+sudo tar czf backup-docker.tar.gz \
+  /srv/bazarr/config /srv/flaresolverr /srv/jellyfin/config \
+  /srv/kavita/config /srv/npm/data /srv/portainer/data \
+  /srv/seerr/config /srv/qbittorrent/config /srv/vaultwarden \
+  apps/plex/config
 
-# systemd app configs
-sudo tar czf backup-systemd-configs.tar.gz \
-  /var/lib/radarr \
-  /var/lib/sonarr \
-  /var/lib/prowlarr
+# systemd configs
+sudo tar czf backup-systemd.tar.gz \
+  /var/lib/radarr /var/lib/sonarr /var/lib/prowlarr
 
-# Nextcloud
-sudo tar czf backup-nextcloud.tar.gz \
-  apps/nextcloud/npm/data \
-  /srv/nextcloud-data
-docker run --rm -v nextcloud_aio_mastercontainer:/config alpine tar czf - -C /mnt/docker-aio-config . > backup-nextcloud-aio-config.tar.gz
+# Nextcloud AIO config volume
+docker run --rm -v nextcloud_aio_mastercontainer:/config alpine \
+  tar czf - -C /mnt/docker-aio-config . > backup-nc-aio.tar.gz
 ```
 
-## Restore
-
-1. Ensure the target directories exist and have correct ownership (see **Permissions** above).
-2. Extract the backup archive into the appropriate paths.
-3. Start the service:
-   - **Docker**: `docker compose up -d` (from `apps/<app>/`)
-   - **systemd**: `sudo systemctl start <app>`
+See `docs/` for full recreation steps.
