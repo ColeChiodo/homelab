@@ -1,6 +1,6 @@
 # Homelab
 
-Media server, cloud storage, monitoring, and self-hosted services on bare-metal Ubuntu.
+Media server, cloud storage, monitoring, and self-hosted services on Proxmox.
 
 ## Layout
 
