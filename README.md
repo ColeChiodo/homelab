@@ -2,6 +2,8 @@
 
 Media server, cloud storage, monitoring, and self-hosted services on Proxmox.
 
+![Desktop](.resources/homelab.gif)
+
 ## Layout
 
 ```
